@@ -75,7 +75,7 @@ constexpr float VISC     = (U_JET * DIAM) / REYNOLDS;      // kinematic viscosit
 constexpr float TAU      = 0.5f + 3.0f * VISC;             // relaxation time
 constexpr float CSSQ     = 1.0f / 3.0f;                    // square of speed of sound
 constexpr float OMEGA    = 1.0f / TAU;                     // relaxation frequency
-constexpr float GAMMA    = 0.15f * 3.0f;                   // sharpening of the interface
+constexpr float GAMMA    = 0.15f * 7x   .0f;                   // sharpening of the interface
 constexpr float SIGMA    = (U_JET * U_JET * DIAM) / WEBER; // surface tension coefficient
 
 // auxiliary constants
@@ -140,7 +140,7 @@ constexpr float COEFF_FORCE = (1.0f - OMEGA / 2.0f); // fixed approximation of (
 
 #ifdef RUN_MODE
     constexpr int MACRO_SAVE = 100;
-    constexpr int NSTEPS = 30000;
+    constexpr int NSTEPS = 60000;
 #elif defined(SAMPLE_MODE)
     constexpr int MACRO_SAVE = 100;
     constexpr int NSTEPS = 1000;

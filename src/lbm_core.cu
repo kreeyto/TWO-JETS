@@ -101,6 +101,13 @@ __global__ void gpuMomCollisionStream(LBMFields d) {
     PYZ += fneq[19] - fneq[21] + fneq[20] - fneq[22] + fneq[25] - fneq[23] + fneq[26] - fneq[24];
     #endif // D3Q27
 
+    d.pxx[idx3] = PXX;
+    d.pyy[idx3] = PYY;
+    d.pzz[idx3] = PZZ;
+    d.pxy[idx3] = PXY;
+    d.pxz[idx3] = PXZ;   
+    d.pyz[idx3] = PYZ;
+
     #pragma unroll FLINKS
     for (int Q = 0; Q < FLINKS; ++Q) {
         const int xx = x + CIX[Q];

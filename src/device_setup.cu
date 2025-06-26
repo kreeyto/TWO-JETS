@@ -24,6 +24,12 @@ void initDeviceVars() {
     checkCudaErrors(cudaMalloc(&lbm.ux,    SIZE));
     checkCudaErrors(cudaMalloc(&lbm.uy,    SIZE));
     checkCudaErrors(cudaMalloc(&lbm.uz,    SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxx,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pyy,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pzz,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxy,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxz,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pyz,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normx, SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normy, SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normz, SIZE));

@@ -109,6 +109,12 @@ int main(int argc, char* argv[]) {
     cudaFree(lbm.ux); 
     cudaFree(lbm.uy); 
     cudaFree(lbm.uz);
+    cudaFree(lbm.pxx);
+    cudaFree(lbm.pyy);
+    cudaFree(lbm.pzz);
+    cudaFree(lbm.pxy);
+    cudaFree(lbm.pxz);
+    cudaFree(lbm.pyz);
     cudaFree(lbm.ffx); 
     cudaFree(lbm.ffy); 
     cudaFree(lbm.ffz);

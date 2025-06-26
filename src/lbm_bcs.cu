@@ -130,18 +130,33 @@ __global__ void gpuReconstructBoundaries(LBMFields d) {
     const int z = threadIdx.z + blockIdx.z * blockDim.z;
 
     bool is_valid_edge = (x < NX && y < NY && z < NZ) &&
-                         (x == 0 || x == NX-1 || y == NY-1 || z == NZ-1); 
-    if (!is_valid_edge) return;
-    const idx_t idx3 = gpu_idx_global3(x,y,z);
+                            (x == 0 || x == NX-1 || y == NY-1 || z == NZ-1); 
+    if (!is_valid_edge) return;                       
+
+    const idx_t boundary_idx3 = gpu_idx_global3(x,y,z);
+    float rho_val = d.rho[boundary_idx3];
+    float phi_val = d.phi[boundary_idx3];
+    float ux_val = d.ux[boundary_idx3];
+    float uy_val = d.uy[boundary_idx3];
+    float uz_val = d.uz[boundary_idx3];
+    float uu = 1.5f * (ux_val*ux_val + uy_val*uy_val + uz_val*uz_val);
 
     #pragma unroll FLINKS
     for (int Q = 0; Q < FLINKS; ++Q) {
         const int xx = x + CIX[Q];
         const int yy = y + CIY[Q];
         const int zz = z + CIZ[Q];
+        const idx_t boundary_idx4 = gpu_idx_global4(x,y,z,Q); 
+        float feq = gpu_compute_equilibria(rho_val,ux_val,uy_val,uz_val,uu,Q);
         if (xx >= 0 && xx < NX && yy >= 0 && yy < NY && zz >= 0 && zz < NZ) {
-            const idx_t streamed_idx4 = gpu_idx_global4(xx,yy,zz,Q);
-            d.f[streamed_idx4] = to_dtype(W[Q] * d.rho[idx3] - W[Q]);
+            const idx_t fluid_idx3 = gpu_idx_global3(xx,yy,zz); 
+            float fneq_reg = (W[Q] * 4.5f) * ((CIX[Q]*CIX[Q] - CSSQ) * d.pxx[fluid_idx3] +
+                                              (CIY[Q]*CIY[Q] - CSSQ) * d.pyy[fluid_idx3] +
+                                              (CIZ[Q]*CIZ[Q] - CSSQ) * d.pzz[fluid_idx3] +
+                                               2.0f * CIX[Q] * CIY[Q] * d.pxy[fluid_idx3] +
+                                               2.0f * CIX[Q] * CIZ[Q] * d.pxz[fluid_idx3] +
+                                               2.0f * CIY[Q] * CIZ[Q] * d.pyz[fluid_idx3]);
+            d.f[boundary_idx4] = to_dtype(feq + OMC * fneq_reg);
         }
     }
     #pragma unroll GLINKS
@@ -149,9 +164,10 @@ __global__ void gpuReconstructBoundaries(LBMFields d) {
         const int xx = x + CIX[Q];
         const int yy = y + CIY[Q];
         const int zz = z + CIZ[Q];
+        float geq = gpu_compute_truncated_equilibria(phi_val,ux_val,uy_val,uz_val,Q);
         if (xx >= 0 && xx < NX && yy >= 0 && yy < NY && zz >= 0 && zz < NZ) {
-            const idx_t streamed_idx4 = gpu_idx_global4(xx,yy,zz,Q);
-            d.g[streamed_idx4] = W_G[Q] * d.phi[idx3] - W_G[Q];
+            const idx_t fluid_idx4 = gpu_idx_global4(xx,yy,zz,Q);
+            d.g[fluid_idx4] = geq;
         }
     }
 }
