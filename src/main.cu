@@ -44,19 +44,30 @@ int main(int argc, char* argv[]) {
 
         // =================================== INFLOW =================================== //
 
-            gpuApplyInflow<<<numBlocksZ,threadsPerBlockZ,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm,STEP); 
+            gpuApplyRisingInflow<<<numBlocksZ,threadsPerBlockZ,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm,STEP); 
             getLastCudaError("gpuApplyInflow");
-            gpuApplyLatInflow<<<numBlocksY,threadsPerBlockY,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm); 
+            gpuApplyLateralInflow<<<numBlocksY,threadsPerBlockY,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm,STEP); 
             getLastCudaError("gpuApplyLatInflow");
 
         // =============================================================================  //
+
+        // ========================= GRADIENTS & FORCES ========================= //
+
+            gpuPhi<<<numBlocks,threadsPerBlock,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm);
+            getLastCudaError("gpuPhi");
+            gpuGradients<<<numBlocks,threadsPerBlock,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm); 
+            getLastCudaError("gpuGradients");
+            gpuForces<<<numBlocks,threadsPerBlock,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm); 
+            getLastCudaError("gpuForces");
+        
+        // ====================================================================== //
         
         // ========================= COLLISION & STREAMING ========================= //
-            
+        
+            gpuCollisionStream<<<numBlocks,threadsPerBlock,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm); 
+            getLastCudaError("gpuCollisionStream");
             gpuEvolvePhaseField<<<numBlocks,threadsPerBlock,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm); 
             getLastCudaError("gpuEvolvePhaseField");
-            gpuMomCollisionStream<<<numBlocks,threadsPerBlock,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm); 
-            getLastCudaError("gpuMomCollisionStream");
 
         // ========================================================================= //    
 
@@ -65,9 +76,9 @@ int main(int argc, char* argv[]) {
             gpuReconstructBoundaries<<<numBlocks,threadsPerBlock,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm); 
             getLastCudaError("gpuReconstructBoundaries");
             gpuApplyOutflowX<<<numBlocksX,threadsPerBlockX,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm);
-            getLastCudaError("gpuApplyOutflowZ");
+            getLastCudaError("gpuApplyOutflowX");
             gpuApplyOutflowY<<<numBlocksY,threadsPerBlockY,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm);
-            getLastCudaError("gpuApplyOutflowZ");
+            getLastCudaError("gpuApplyOutflowY");
             gpuApplyOutflowZ<<<numBlocksZ,threadsPerBlockZ,DYNAMIC_SHARED_SIZE,mainStream>>> (lbm);
             getLastCudaError("gpuApplyOutflowZ");
 
@@ -85,11 +96,7 @@ int main(int argc, char* argv[]) {
         if (STEP % MACRO_SAVE == 0) {
 
             copyAndSaveToBinary(lbm.phi,NX*NY*NZ,SIM_DIR,SIM_ID,STEP,"phi");
-            copyAndSaveToBinary(lbm.rho,NX*NY*NZ,SIM_DIR,SIM_ID,STEP,"rho");
             copyAndSaveToBinary(lbm.uy,NX*NY*NZ,SIM_DIR,SIM_ID,STEP,"uy");
-            copyAndSaveToBinary(lbm.uz,NX*NY*NZ,SIM_DIR,SIM_ID,STEP,"uz");
-            //copyAndSaveToBinary(dfields.vorticity_mag,NX*NY*NZ,SIM_DIR,SIM_ID,STEP,"vorticity_mag");
-            //copyAndSaveToBinary(dfields.q_criterion,NX*NY*NZ,SIM_DIR,SIM_ID,STEP,"q_criterion");
 
             std::cout << "Passo " << STEP << ": Dados salvos em " << SIM_DIR << std::endl;
         }
@@ -103,6 +110,7 @@ int main(int argc, char* argv[]) {
     cudaFree(lbm.g);
     cudaFree(lbm.phi); 
     cudaFree(lbm.rho);
+    cudaFree(lbm.ind);
     cudaFree(lbm.normx);
     cudaFree(lbm.normy); 
     cudaFree(lbm.normz);
@@ -132,7 +140,7 @@ int main(int argc, char* argv[]) {
     std::cout << "     Performance             : " << MLUPS << " MLUPS\n";
     std::cout << "// =============================================== //\n" << std::endl;
 
-    generateSimulationInfoFile(SIM_DIR,SIM_ID,VELOCITY_SET,NSTEPS,MACRO_SAVE,TAU,MLUPS);
+    generateSimulationInfoFile(SIM_DIR,SIM_ID,VELOCITY_SET,NSTEPS,MACRO_SAVE,0.0f,MLUPS);
     getLastCudaError("Final sync");
     return 0;
 }

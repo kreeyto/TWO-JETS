@@ -4,7 +4,7 @@
 extern __constant__ float W[FLINKS];
 extern __constant__ float W_G[GLINKS];
 
-extern __constant__ ci_t CIX[FLINKS], CIY[FLINKS], CIZ[FLINKS];
+extern __constant__ ci_t CIX[FLINKS], CIY[FLINKS], CIZ[FLINKS], OPP[FLINKS];
 
 #ifdef PERTURBATION
     extern __constant__ float DATAZ[200];
@@ -13,9 +13,8 @@ extern __constant__ ci_t CIX[FLINKS], CIY[FLINKS], CIZ[FLINKS];
 struct LBMFields {
     float *rho, *phi;
     float *ux, *uy, *uz;
-    float *pxx, *pyy, *pzz;
-    float *pxy, *pxz, *pyz;
-    float *normx, *normy, *normz;
+    float *pxx, *pyy, *pzz, *pxy, *pxz, *pyz;
+    float *ind, *normx, *normy, *normz;
     float *ffx, *ffy, *ffz;
     dtype_t *f; float *g; 
 };

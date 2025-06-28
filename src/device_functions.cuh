@@ -16,6 +16,10 @@ __device__ __forceinline__ idx_t gpu_idx_shared3(const int tx, const int ty, con
     return tx + ty * TILE_X + tz * TILE_X * TILE_Y;
 }
 
+__device__ inline bool inflow_active(int step, int start) {
+    return step >= start;
+}
+
 __device__ __forceinline__ float gpu_smoothstep(float edge0, float edge1, float x) {
     x = __saturatef((x - edge0) / (edge1 - edge0));
     return x * x * (3.0f - 2.0f * x);

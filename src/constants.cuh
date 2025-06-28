@@ -57,37 +57,40 @@ constexpr int TILE_Z = BLOCK_SIZE_Z + 2;
 constexpr size_t DYNAMIC_SHARED_SIZE = 0;
 
 // domain size
-constexpr int MESH = 64;
-constexpr int DIAM = 10;
+constexpr int MESH = 32;
 constexpr int NX   = MESH;
-constexpr int NY   = MESH*2;
-constexpr int NZ   = MESH*2;        
+constexpr int NY   = MESH*4;
+constexpr int NZ   = MESH*4;   
 
 // jet velocity
-constexpr float U_JET = 0.05; 
+constexpr float U_JET = 0.05f; 
 
-// adimensional parameters
-constexpr int REYNOLDS = 5000; 
-constexpr int WEBER    = 500; 
+// water parameters
+constexpr int DIAM_WATER     = 5; // static_cast<int>(10.0f * (NY / 1024.0f))
+constexpr int REYNOLDS_WATER = 1400;
+constexpr float VISC_WATER   = (U_JET * DIAM_WATER) / REYNOLDS_WATER; 
+
+// oil parameters
+constexpr int DIAM_OIL     = 5; // static_cast<int>(7.3f * DIAM_WATER)
+constexpr int REYNOLDS_OIL = 450; 
+constexpr int WEBER_OIL    = 500; 
+constexpr float VISC_OIL   = (U_JET * DIAM_OIL) / REYNOLDS_OIL; 
 
 // general model parameters
-constexpr float VISC     = (U_JET * DIAM) / REYNOLDS;      // kinematic viscosity
-constexpr float TAU      = 0.5f + 3.0f * VISC;             // relaxation time
-constexpr float CSSQ     = 1.0f / 3.0f;                    // square of speed of sound
-constexpr float OMEGA    = 1.0f / TAU;                     // relaxation frequency
-constexpr float GAMMA    = 0.15f * 7x   .0f;                   // sharpening of the interface
-constexpr float SIGMA    = (U_JET * U_JET * DIAM) / WEBER; // surface tension coefficient
+constexpr float CSSQ     = 1.0f / 3.0f;                            // square of speed of sound
+constexpr float GAMMA    = 0.15f * 7.0f;                           // sharpening of the interface
+constexpr float SIGMA    = (U_JET * U_JET * DIAM_OIL) / WEBER_OIL; // surface tension coefficient
 
 // auxiliary constants
-constexpr float OOS         = 1.0f / 6.0f;           // one over six
-constexpr float OMC         = 1.0f - OMEGA;          // complementary of omega
-constexpr float COEFF_FORCE = (1.0f - OMEGA / 2.0f); // fixed approximation of (1-omega/2), valid in high re limitations
+constexpr float OOS         = 1.0f / 6.0f;  // one over six
+constexpr float COEFF_FORCE = 0.5f;         // fixed approximation of (1-omega/2), valid in high re limitations
 
 // first distribution related
 #ifdef D3Q19 //                 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 
     constexpr ci_t H_CIX[19] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0 };
     constexpr ci_t H_CIY[19] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 1,-1 };
     constexpr ci_t H_CIZ[19] = { 0, 0, 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0,-1, 1,-1, 1 };
+    constexpr ci_t H_OPP[19] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
     constexpr float H_W[19] = { 1.0f / 3.0f, 
                                 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f,
                                 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 
@@ -140,7 +143,7 @@ constexpr float COEFF_FORCE = (1.0f - OMEGA / 2.0f); // fixed approximation of (
 
 #ifdef RUN_MODE
     constexpr int MACRO_SAVE = 100;
-    constexpr int NSTEPS = 60000;
+    constexpr int NSTEPS = 30000;
 #elif defined(SAMPLE_MODE)
     constexpr int MACRO_SAVE = 100;
     constexpr int NSTEPS = 1000;
